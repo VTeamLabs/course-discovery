@@ -38,7 +38,9 @@ from course_discovery.apps.course_metadata.models import (
     PersonAreaOfExpertise, PersonSocialNetwork, Position, Prerequisite, Program, ProgramType, Ranking, Seat, SeatType,
     Subject, Topic, Track, Video
 )
-from course_discovery.apps.course_metadata.utils import get_course_run_estimated_hours, parse_course_key_fragment
+from course_discovery.apps.course_metadata.utils import (
+    get_course_run_estimated_hours, parse_course_key_fragment, serialize_course_skills
+)
 from course_discovery.apps.ietf_language_tags.models import LanguageTag
 from course_discovery.apps.publisher.api.serializers import GroupUserSerializer
 
@@ -1077,6 +1079,7 @@ class CourseSerializer(TaggitSerializer, MinimalCourseSerializer):
                                                        queryset=Collaborator.objects.all(),
                                                        read_serializer=CollaboratorSerializer())
     skill_names = serializers.SerializerMethodField()
+    skills = serializers.SerializerMethodField()
 
     @classmethod
     def prefetch_queryset(cls, partner, queryset=None, course_runs=None):  # pylint: disable=arguments-differ
@@ -1121,6 +1124,7 @@ class CourseSerializer(TaggitSerializer, MinimalCourseSerializer):
             'extra_description', 'additional_information', 'faq', 'learner_testimonials',
             'enrollment_count', 'recent_enrollment_count', 'topics', 'partner', 'key_for_reruns', 'url_slug',
             'url_slug_history', 'url_redirects', 'course_run_statuses', 'editors', 'collaborators', 'skill_names',
+            'skills',
         )
         extra_kwargs = {
             'partner': {'write_only': True}
@@ -1144,6 +1148,10 @@ class CourseSerializer(TaggitSerializer, MinimalCourseSerializer):
     def get_skill_names(self, obj):
         course_skills = get_whitelisted_course_skills(obj.key)
         return list(set(course_skill.skill.name for course_skill in course_skills))
+
+    def get_skills(self, obj):
+        course_skills = get_whitelisted_course_skills(obj.key)
+        return serialize_course_skills(course_skills)
 
     def create(self, validated_data):
         return Course.objects.create(**validated_data)

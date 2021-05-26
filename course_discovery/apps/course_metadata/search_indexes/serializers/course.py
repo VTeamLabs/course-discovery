@@ -7,7 +7,7 @@ from taxonomy.utils import get_whitelisted_course_skills
 
 from course_discovery.apps.api import serializers as cd_serializers
 from course_discovery.apps.api.serializers import ContentTypeSerializer, CourseWithProgramsSerializer
-from course_discovery.apps.course_metadata.utils import get_course_run_estimated_hours
+from course_discovery.apps.course_metadata.utils import get_course_run_estimated_hours, serialize_course_skills
 from course_discovery.apps.edx_elasticsearch_dsl_extensions.serializers import BaseDjangoESDSLFacetSerializer
 
 from ..constants import BASE_SEARCH_INDEX_FIELDS, COMMON_IGNORED_FIELDS
@@ -25,6 +25,7 @@ class CourseSearchDocumentSerializer(ModelObjectDocumentSerializerMixin, DateTim
     course_runs = serializers.SerializerMethodField()
     seat_types = serializers.SerializerMethodField()
     skill_names = serializers.SerializerMethodField()
+    skills = serializers.SerializerMethodField()
     end_date = serializers.SerializerMethodField()
     course_ends = serializers.SerializerMethodField()
 
@@ -83,6 +84,10 @@ class CourseSearchDocumentSerializer(ModelObjectDocumentSerializerMixin, DateTim
         course_skills = get_whitelisted_course_skills(result.key)
         return list(set(course_skill.skill.name for course_skill in course_skills))
 
+    def get_skills(self, result):
+        course_skills = get_whitelisted_course_skills(result.key)
+        return serialize_course_skills(course_skills)
+
     def get_end_date(self, result):
         return self.handle_datetime_field(result.end_date)
 
@@ -122,6 +127,7 @@ class CourseSearchDocumentSerializer(ModelObjectDocumentSerializerMixin, DateTim
             'uuid',
             'seat_types',
             'skill_names',
+            'skills',
             'end_date',
             'course_ends',
             'subjects',

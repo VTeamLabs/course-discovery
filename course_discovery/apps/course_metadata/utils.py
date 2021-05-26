@@ -414,6 +414,16 @@ def calculated_seat_upgrade_deadline(seat):
     return None
 
 
+def serialize_course_skills(course_skills):
+    """Returns a list of objects, holding skills belonging to a course along with their descriptions."""
+    if course_skills:
+        return [{
+            'name': course_skill.skill.name,
+            'description': course_skill.skill.description,
+        } for course_skill in course_skills]
+    return []
+
+
 def serialize_seat_for_ecommerce_api(seat, mode):
     return {
         'expires': serialize_datetime(calculated_seat_upgrade_deadline(seat)),

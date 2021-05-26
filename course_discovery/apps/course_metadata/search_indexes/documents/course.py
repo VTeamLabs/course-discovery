@@ -4,6 +4,7 @@ from opaque_keys.edx.keys import CourseKey
 from taxonomy.utils import get_whitelisted_course_skills
 
 from course_discovery.apps.course_metadata.models import Course
+from course_discovery.apps.course_metadata.utils import serialize_course_skills
 
 from .analyzers import case_insensitive_keyword
 from .common import BaseCourseDocument, filter_visible_runs
@@ -44,6 +45,10 @@ class CourseDocument(BaseCourseDocument):
     modified = fields.DateField()
     prerequisites = fields.KeywordField(multi=True)
     skill_names = fields.KeywordField(multi=True)
+    skills = fields.NestedField(properties={
+        'name': fields.TextField(),
+        'description': fields.TextField(),
+    })
     status = fields.KeywordField(multi=True)
     start = fields.DateField(multi=True)
 
@@ -96,6 +101,10 @@ class CourseDocument(BaseCourseDocument):
     def prepare_skill_names(self, obj):
         course_skills = get_whitelisted_course_skills(obj.key)
         return list(set(course_skill.skill.name for course_skill in course_skills))
+
+    def prepare_skills(self, obj):
+        course_skills = get_whitelisted_course_skills(obj.key)
+        return serialize_course_skills(course_skills)
 
     def prepare_status(self, obj):
         return [course_run.status for course_run in filter_visible_runs(obj.course_runs)]
